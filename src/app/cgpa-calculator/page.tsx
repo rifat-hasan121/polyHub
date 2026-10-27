@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   calculateOverallCGPA,
   semesterWeights,
@@ -21,11 +23,17 @@ function getGrade(cgpa: number) {
   return "D";
 }
 
-export default function CgpaCalculatorPage() {
-  const [probidhan, setProbidhan] = useState<Probidhan>("PROBIDHAN_2022");
+function CgpaCalculatorContent() {
+  const searchParams = useSearchParams();
+  const [probidhan, setProbidhan] = useState<Probidhan>(
+    searchParams.get("probidhan") === "PROBIDHAN_2016"
+      ? "PROBIDHAN_2016"
+      : "PROBIDHAN_2022",
+  );
   const [semesterInputs, setSemesterInputs] = useState<string[]>(
     Array(8).fill(""),
   );
+
   const result = useMemo(() => {
     const semesterGPAs: { [semester: number]: number } = {};
     semesterInputs.forEach((value, index) => {
@@ -212,5 +220,13 @@ export default function CgpaCalculatorPage() {
         </aside>
       </div>
     </div>
+  );
+}
+
+export default function CgpaCalculatorPage() {
+  return (
+    <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-white" />}>
+      <CgpaCalculatorContent />
+    </Suspense>
   );
 }

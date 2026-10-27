@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpen, Download, FileQuestion, FileText, Search } from "lucide-react";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import {
+  Bookmark,
+  BookmarkCheck,
+  BookOpen,
+  Download,
+  FileQuestion,
+  FileText,
+  Search,
+} from "lucide-react";
 import type { MaterialType, Probidhan } from "@prisma/client";
 
 type MaterialResult = {
@@ -205,17 +216,59 @@ function MaterialSkeleton() {
   );
 }
 
-export default function MaterialsPage() {
-  const [department, setDepartment] = useState("");
-  const [semester, setSemester] = useState("");
-  const [probidhan, setProbidhan] = useState<Probidhan>("PROBIDHAN_2022");
+function MaterialsPageContent() {
+  const { status: sessionStatus } = useSession();
+  const searchParams = useSearchParams();
+  const queryDepartment = searchParams.get("department")?.toUpperCase() ?? "";
+  const querySemester = searchParams.get("semester") ?? "";
+  const queryProbidhan = searchParams.get("probidhan");
+  const [department, setDepartment] = useState(
+    departments.some((item) => item.code === queryDepartment) ? queryDepartment : "",
+  );
+  const [semester, setSemester] = useState(/^[1-8]$/.test(querySemester) ? querySemester : "");
+  const [probidhan, setProbidhan] = useState<Probidhan>(
+    queryProbidhan === "PROBIDHAN_2016" ? "PROBIDHAN_2016" : "PROBIDHAN_2022",
+  );
   const [type, setType] = useState<MaterialType | "">("");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [materials, setMaterials] = useState<MaterialResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bookmarkError, setBookmarkError] = useState("");
+  const [savedMaterialIds, setSavedMaterialIds] = useState<string[]>([]);
+  const [updatingBookmarkId, setUpdatingBookmarkId] = useState("");
   const [usingSampleData, setUsingSampleData] = useState(false);
+
+  useEffect(() => {
+    if (sessionStatus !== "authenticated") return;
+
+    const controller = new AbortController();
+    async function loadSavedMaterials() {
+      try {
+        const response = await fetch("/api/materials/bookmarks", {
+          signal: controller.signal,
+        });
+        const result = (await response.json()) as {
+          materialIds?: string[];
+          error?: string;
+        };
+        if (!response.ok) {
+          throw new Error(result.error ?? "Unable to load saved materials.");
+        }
+        setSavedMaterialIds(result.materialIds ?? []);
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        setBookmarkError(
+          caught instanceof Error ? caught.message : "Unable to load saved materials.",
+        );
+      }
+
+    }
+
+    void loadSavedMaterials();
+    return () => controller.abort();
+  }, [sessionStatus]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setSearch(searchInput.trim()), 300);
@@ -292,6 +345,34 @@ export default function MaterialsPage() {
     void loadMaterials();
     return () => controller.abort();
   }, [department, probidhan, search, semester, type]);
+
+  async function toggleBookmark(materialId: string) {
+    const currentlySaved = savedMaterialIds.includes(materialId);
+    setBookmarkError("");
+    setUpdatingBookmarkId(materialId);
+    try {
+      const response = await fetch("/api/materials/bookmarks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ materialId, saved: !currentlySaved }),
+      });
+      const result = (await response.json()) as { saved?: boolean; error?: string };
+      if (!response.ok || result.saved === undefined) {
+        throw new Error(result.error ?? "Unable to update saved materials.");
+      }
+      setSavedMaterialIds((current) =>
+        result.saved
+          ? [...new Set([...current, materialId])]
+          : current.filter((id) => id !== materialId),
+      );
+    } catch (caught) {
+      setBookmarkError(
+        caught instanceof Error ? caught.message : "Unable to update saved materials.",
+      );
+    } finally {
+      setUpdatingBookmarkId("");
+    }
+  }
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -435,6 +516,11 @@ export default function MaterialsPage() {
             : "You’re viewing sample materials for preview. These are not real uploads and do not have downloadable files."}
         </p>
       ) : null}
+      {bookmarkError ? (
+        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
+          {bookmarkError}
+        </p>
+      ) : null}
 
       {error && !usingSampleData ? null : isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -472,7 +558,32 @@ export default function MaterialsPage() {
                     <FileText aria-hidden="true" className="size-5" />
                   )}
                 </span>
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  {sessionStatus === "authenticated" && !material.isDemo ? (
+                    <button
+                      aria-label={
+                        savedMaterialIds.includes(material.id)
+                          ? `Remove ${material.title} from saved materials`
+                          : `Save ${material.title}`
+                      }
+                      aria-pressed={savedMaterialIds.includes(material.id)}
+                      className="rounded-full p-1.5 text-cyan-800 transition hover:bg-cyan-50 disabled:opacity-50"
+                      disabled={updatingBookmarkId === material.id}
+                      onClick={() => void toggleBookmark(material.id)}
+                      title={
+                        savedMaterialIds.includes(material.id)
+                          ? "Remove from saved materials"
+                          : "Save material"
+                      }
+                      type="button"
+                    >
+                      {savedMaterialIds.includes(material.id) ? (
+                        <BookmarkCheck aria-hidden="true" className="size-5" />
+                      ) : (
+                        <Bookmark aria-hidden="true" className="size-5" />
+                      )}
+                    </button>
+                  ) : null}
                   {material.isDemo ? (
                     <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
                       Sample
@@ -531,5 +642,13 @@ export default function MaterialsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MaterialsPage() {
+  return (
+    <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-white" />}>
+      <MaterialsPageContent />
+    </Suspense>
   );
 }

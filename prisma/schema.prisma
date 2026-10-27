@@ -44,6 +44,7 @@ model User {
   probidhan      Probidhan?
   semester       Int?
   materials      Material[]
+  savedMaterials SavedMaterial[]
   projects       Project[]
   communityPosts CommunityPost[]
   comments       Comment[]
@@ -82,7 +83,20 @@ model Material {
   userId    String
   subject   Subject      @relation(fields: [subjectId], references: [id])
   user      User         @relation(fields: [userId], references: [id])
+  savedBy   SavedMaterial[]
   createdAt DateTime     @default(now())
+}
+
+model SavedMaterial {
+  id         String   @id @default(cuid())
+  userId     String
+  materialId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, materialId])
+  @@index([userId])
 }
 
 model Project {

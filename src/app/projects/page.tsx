@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
   ArrowUpRight,
-  Github,
+  Code2,
   Image as ImageIcon,
   LoaderCircle,
   Plus,
@@ -142,7 +142,7 @@ function ProjectCard({ project }: { project: Project }) {
                 target="_blank"
                 title="Source repository"
               >
-                <Github aria-hidden="true" className="size-5" />
+                <Code2 aria-hidden="true" className="size-5" />
               </a>
             ) : null}
             {safeLiveUrl ? (

@@ -20,6 +20,23 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Database and deployment
+
+PolyHub currently uses PostgreSQL through Prisma. Set `DATABASE_URL`, `NEXTAUTH_SECRET`, and `NEXTAUTH_URL` in the environment. Google sign-in also requires `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+
+For a new or local database, sync the Prisma schema before starting the app:
+
+```bash
+npx prisma db push
+```
+
+For production, provision PostgreSQL and apply the reviewed Prisma schema changes to that database before deploying the application. Do not copy local `.env` values into deployment settings. The production build and lint checks are:
+
+```bash
+npm run lint
+npm run build
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

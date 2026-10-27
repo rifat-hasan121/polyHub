@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client";
+import type { Probidhan, Role } from "@prisma/client";
 import type { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
@@ -7,6 +7,8 @@ declare module "next-auth" {
     role: Role;
     department?: string | null;
     semester?: number | null;
+    polytechnic?: string | null;
+    probidhan?: Probidhan | null;
   }
 
   interface Session {
@@ -15,6 +17,8 @@ declare module "next-auth" {
       role: Role;
       department?: string | null;
       semester?: number | null;
+      polytechnic?: string | null;
+      probidhan?: Probidhan | null;
     } & DefaultSession["user"];
   }
 }
@@ -25,5 +29,7 @@ declare module "next-auth/jwt" {
     role: Role;
     department: string | null;
     semester: number | null;
+    polytechnic: string | null;
+    probidhan: Probidhan | null;
   }
 }

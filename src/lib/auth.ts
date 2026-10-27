@@ -73,15 +73,18 @@ export const authOptions: NextAuthOptions = {
 
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user?.email && !token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { email: user.email.toLowerCase() },
           select: {
             id: true,
+            name: true,
             role: true,
             department: true,
             semester: true,
+            polytechnic: true,
+            probidhan: true,
           },
         });
 
@@ -90,9 +93,37 @@ export const authOptions: NextAuthOptions = {
         }
 
         token.id = dbUser.id;
+        token.name = dbUser.name;
         token.role = dbUser.role;
         token.department = dbUser.department;
         token.semester = dbUser.semester;
+        token.polytechnic = dbUser.polytechnic;
+        token.probidhan = dbUser.probidhan;
+      }
+
+      if (trigger === "update" && token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id },
+          select: {
+            name: true,
+            role: true,
+            department: true,
+            semester: true,
+            polytechnic: true,
+            probidhan: true,
+          },
+        });
+
+        if (!dbUser) {
+          throw new Error("Authenticated user was not found in the database.");
+        }
+
+        token.name = dbUser.name;
+        token.role = dbUser.role;
+        token.department = dbUser.department;
+        token.semester = dbUser.semester;
+        token.polytechnic = dbUser.polytechnic;
+        token.probidhan = dbUser.probidhan;
       }
 
       return token;
@@ -100,9 +131,12 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
+        session.user.name = token.name;
         session.user.role = token.role;
         session.user.department = token.department;
         session.user.semester = token.semester;
+        session.user.polytechnic = token.polytechnic;
+        session.user.probidhan = token.probidhan;
       }
 
       return session;

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -156,9 +157,16 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
   );
 }
 
-export default function JobsPage() {
-  const [activeTab, setActiveTab] = useState<"attachment" | "jobs">("attachment");
-  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+function JobsPageContent() {
+  const searchParams = useSearchParams();
+  const queryType = searchParams.get("type");
+  const queryDepartment = searchParams.get("department")?.toUpperCase() ?? "";
+  const [activeTab, setActiveTab] = useState<"attachment" | "jobs">(
+    queryType === "FULL_TIME" || queryType === "PART_TIME" ? "jobs" : "attachment",
+  );
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>(
+    departments.some((item) => item.code === queryDepartment) ? [queryDepartment] : [],
+  );
   const [location, setLocation] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -390,5 +398,13 @@ export default function JobsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function JobsPage() {
+  return (
+    <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-white" />}>
+      <JobsPageContent />
+    </Suspense>
   );
 }
