@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ALUMNI
+  ADMIN
+}
+
+enum Probidhan {
+  PROBIDHAN_2016
+  PROBIDHAN_2022
+}
+
+enum MaterialType {
+  NOTE
+  QUESTION_BANK
+  SYLLABUS
+  BOOK_PDF
+}
+
+enum JobType {
+  INDUSTRIAL_ATTACHMENT
+  FULL_TIME
+  PART_TIME
+}
+
+model User {
+  id             String          @id @default(cuid())
+  name           String
+  email          String          @unique
+  passwordHash   String?
+  image          String?
+  role           Role            @default(STUDENT)
+  polytechnic    String?
+  department     String?
+  probidhan      Probidhan?
+  semester       Int?
+  materials      Material[]
+  projects       Project[]
+  communityPosts CommunityPost[]
+  comments       Comment[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Department {
+  id       String    @id @default(cuid())
+  name     String
+  code     String    @unique
+  subjects Subject[]
+}
+
+model Subject {
+  id           String     @id @default(cuid())
+  name         String
+  code         String
+  semester     Int
+  probidhan    Probidhan
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+  materials    Material[]
+
+  @@unique([code, probidhan])
+}
+
+model Material {
+  id        String       @id @default(cuid())
+  title     String
+  fileUrl   String
+  type      MaterialType
+  probidhan Probidhan
+  year      Int?
+  subjectId String
+  userId    String
+  subject   Subject      @relation(fields: [subjectId], references: [id])
+  user      User         @relation(fields: [userId], references: [id])
+  createdAt DateTime     @default(now())
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  thumbnail   String?
+  repoUrl     String?
+  liveUrl     String?
+  tags        String[]
+  department  String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Opportunity {
+  id          String    @id @default(cuid())
+  title       String
+  companyName String
+  location    String
+  type        JobType
+  description String
+  applyUrl    String?
+  department  String[]
+  deadline    DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model CommunityPost {
+  id         String    @id @default(cuid())
+  title      String
+  content    String
+  imageUrl   String?
+  department String
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  comments   Comment[]
+  createdAt  DateTime  @default(now())
+}
+
+model Comment {
+  id        String        @id @default(cuid())
+  content   String
+  postId    String
+  userId    String
+  post      CommunityPost @relation(fields: [postId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
+  createdAt DateTime      @default(now())
+}
