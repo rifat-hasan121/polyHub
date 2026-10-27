@@ -8,9 +8,14 @@ const cachedPrisma = globalForPrisma.prisma;
 const cachedClientHasBtebModels =
   typeof cachedPrisma?.btebNotice?.findMany === "function" &&
   typeof cachedPrisma?.examResult?.findMany === "function";
+const cachedClientHasHigherStudyModels =
+  typeof cachedPrisma?.higherStudyResource?.findMany === "function" &&
+  typeof cachedPrisma?.universityGuide?.findMany === "function";
 
 export const prisma =
-  cachedClientHasBtebModels ? cachedPrisma : new PrismaClient();
+  cachedClientHasBtebModels && cachedClientHasHigherStudyModels
+    ? cachedPrisma
+    : new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;

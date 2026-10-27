@@ -5,6 +5,7 @@ import {
   FileText,
   FolderGit2,
   LayoutDashboard,
+  GraduationCap,
   MessageSquare,
   type LucideIcon,
 } from "lucide-react";
@@ -42,6 +43,12 @@ export const navItems: NavItem[] = [
     title: "Attachment & Jobs",
     href: "/jobs",
     icon: Briefcase,
+  },
+  {
+    title: "Higher Study & DUET",
+    href: "/higher-study",
+    icon: GraduationCap,
+    badge: "New",
   },
   {
     title: "BTEB Notices & Results",

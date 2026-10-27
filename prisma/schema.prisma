@@ -32,6 +32,24 @@ enum JobType {
   PART_TIME
 }
 
+enum HigherStudyCategory {
+  DUET_NON_DEPT
+  DUET_DEPT
+  PRIVATE_UNI
+  ABROAD_STUDY
+}
+
+enum HigherStudyResourceType {
+  STUDY_MATERIAL
+  QUESTION_BANK
+}
+
+enum UniversityType {
+  PUBLIC
+  PRIVATE
+  INTERNATIONAL
+}
+
 model User {
   id             String          @id @default(cuid())
   name           String
@@ -73,7 +91,7 @@ model Subject {
 }
 
 model Material {
-  id        String       @id @default(cuid())
+  id        String          @id @default(cuid())
   title     String
   fileUrl   String
   type      MaterialType
@@ -81,10 +99,10 @@ model Material {
   year      Int?
   subjectId String
   userId    String
-  subject   Subject      @relation(fields: [subjectId], references: [id])
-  user      User         @relation(fields: [userId], references: [id])
+  subject   Subject         @relation(fields: [subjectId], references: [id])
+  user      User            @relation(fields: [userId], references: [id])
   savedBy   SavedMaterial[]
-  createdAt DateTime     @default(now())
+  createdAt DateTime        @default(now())
 }
 
 model SavedMaterial {
@@ -126,17 +144,51 @@ model Opportunity {
   createdAt   DateTime  @default(now())
 }
 
+model HigherStudyResource {
+  id               String                  @id @default(cuid())
+  title            String
+  description      String
+  category         HigherStudyCategory
+  resourceType     HigherStudyResourceType @default(STUDY_MATERIAL)
+  department       String?
+  subject          String?
+  year             Int?
+  fileUrl          String?
+  videoUrl         String?
+  questionPaperUrl String?
+  answerKeyUrl     String?
+  solutionUrl      String?
+  createdAt        DateTime                @default(now())
+
+  @@index([category, resourceType, createdAt])
+  @@index([department, subject])
+}
+
+model UniversityGuide {
+  id               String         @id @default(cuid())
+  name             String         @unique
+  type             UniversityType
+  waiverSummary    String
+  costPerSemester  String?
+  admissionDetails String?
+  websiteUrl       String?
+  circularUrl      String?
+  createdAt        DateTime       @default(now())
+
+  @@index([type, createdAt])
+}
+
 model BtebNotice {
-  id            String       @id @default(cuid())
-  btebId        String       @unique
-  title         String
-  publishDate   String?
-  fileUrl       String
-  isImportant   Boolean      @default(false)
-  isResultPdf   Boolean      @default(false)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  examResults   ExamResult[]
+  id          String       @id @default(cuid())
+  btebId      String       @unique
+  title       String
+  publishDate String?
+  fileUrl     String
+  isImportant Boolean      @default(false)
+  isResultPdf Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  examResults ExamResult[]
 }
 
 model ExamResult {
