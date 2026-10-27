@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sync-notices",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

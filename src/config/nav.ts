@@ -2,6 +2,7 @@ import {
   BookOpen,
   Briefcase,
   Calculator,
+  FileText,
   FolderGit2,
   LayoutDashboard,
   MessageSquare,
@@ -41,6 +42,11 @@ export const navItems: NavItem[] = [
     title: "Attachment & Jobs",
     href: "/jobs",
     icon: Briefcase,
+  },
+  {
+    title: "BTEB Notices & Results",
+    href: "/notices",
+    icon: FileText,
   },
   {
     title: "Community",

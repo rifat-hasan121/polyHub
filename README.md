@@ -23,6 +23,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ## Database and deployment
 
 PolyHub currently uses PostgreSQL through Prisma. Set `DATABASE_URL`, `NEXTAUTH_SECRET`, and `NEXTAUTH_URL` in the environment. Google sign-in also requires `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+The scheduled BTEB notice sync also requires a private `CRON_SECRET`; configure the same value in the deployment environment so Vercel Cron can authenticate requests.
 
 For a new or local database, sync the Prisma schema before starting the app:
 

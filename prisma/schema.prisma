@@ -126,6 +126,33 @@ model Opportunity {
   createdAt   DateTime  @default(now())
 }
 
+model BtebNotice {
+  id            String       @id @default(cuid())
+  btebId        String       @unique
+  title         String
+  publishDate   String?
+  fileUrl       String
+  isImportant   Boolean      @default(false)
+  isResultPdf   Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  examResults   ExamResult[]
+}
+
+model ExamResult {
+  id             String     @id @default(cuid())
+  noticeId       String
+  roll           String
+  gpa            Float?
+  passed         Boolean
+  failedSubjects String[]
+  notice         BtebNotice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  createdAt      DateTime   @default(now())
+
+  @@unique([noticeId, roll])
+  @@index([roll])
+}
+
 model CommunityPost {
   id         String    @id @default(cuid())
   title      String
