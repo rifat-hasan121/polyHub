@@ -12,8 +12,28 @@ const cachedClientHasHigherStudyModels =
   typeof cachedPrisma?.higherStudyResource?.findMany === "function" &&
   typeof cachedPrisma?.universityGuide?.findMany === "function";
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function cachedClientHasMaterialModerationFields(client: PrismaClient | undefined) {
+  if (!client) return false;
+
+  const runtimeDataModel: unknown = Reflect.get(client, "_runtimeDataModel");
+  if (!isRecord(runtimeDataModel) || !isRecord(runtimeDataModel.models)) return false;
+  const materialModel = runtimeDataModel.models.Material;
+  if (!isRecord(materialModel) || !Array.isArray(materialModel.fields)) return false;
+
+  const fieldNames = materialModel.fields.flatMap((field): string[] =>
+    isRecord(field) && typeof field.name === "string" ? [field.name] : [],
+  );
+  return fieldNames.includes("status") && fieldNames.includes("rejectionReason");
+}
+
 export const prisma =
-  cachedClientHasBtebModels && cachedClientHasHigherStudyModels
+  cachedClientHasBtebModels &&
+  cachedClientHasHigherStudyModels &&
+  cachedClientHasMaterialModerationFields(cachedPrisma)
     ? cachedPrisma
     : new PrismaClient();
 

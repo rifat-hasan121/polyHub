@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import {
   Bookmark,
   BookmarkCheck,
@@ -11,9 +12,12 @@ import {
   Download,
   FileQuestion,
   FileText,
+  LogIn,
+  UploadCloud,
   Search,
 } from "lucide-react";
 import type { MaterialType, Probidhan } from "@prisma/client";
+import { UploadMaterialModal } from "@/components/materials/upload-material-modal";
 
 type MaterialResult = {
   id: string;
@@ -217,7 +221,7 @@ function MaterialSkeleton() {
 }
 
 function MaterialsPageContent() {
-  const { status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const searchParams = useSearchParams();
   const queryDepartment = searchParams.get("department")?.toUpperCase() ?? "";
   const querySemester = searchParams.get("semester") ?? "";
@@ -239,6 +243,8 @@ function MaterialsPageContent() {
   const [savedMaterialIds, setSavedMaterialIds] = useState<string[]>([]);
   const [updatingBookmarkId, setUpdatingBookmarkId] = useState("");
   const [usingSampleData, setUsingSampleData] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (sessionStatus !== "authenticated") return;
@@ -344,7 +350,7 @@ function MaterialsPageContent() {
 
     void loadMaterials();
     return () => controller.abort();
-  }, [department, probidhan, search, semester, type]);
+  }, [department, probidhan, refreshKey, search, semester, type]);
 
   async function toggleBookmark(materialId: string) {
     const currentlySaved = savedMaterialIds.includes(materialId);
@@ -387,20 +393,40 @@ function MaterialsPageContent() {
           Browse notes, syllabi, books, and past questions from polytechnic
           students.
         </p>
-        <label className="relative mt-6 block max-w-2xl">
-          <Search
-            aria-hidden="true"
-            className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            aria-label="Search materials and subjects"
-            className="h-14 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-cyan-600 focus:ring-4 focus:ring-cyan-600/10"
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search subjects or materials..."
-            type="search"
-            value={searchInput}
-          />
-        </label>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <label className="relative block w-full max-w-2xl">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              aria-label="Search materials and subjects"
+              className="h-14 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-cyan-600 focus:ring-4 focus:ring-cyan-600/10"
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder="Search subjects or materials..."
+              type="search"
+              value={searchInput}
+            />
+          </label>
+          {sessionStatus === "authenticated" && session?.user ? (
+            <button
+              className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-800"
+              onClick={() => setUploadModalOpen(true)}
+              type="button"
+            >
+              <UploadCloud aria-hidden="true" className="size-4" />
+              Upload Material
+            </button>
+          ) : sessionStatus === "unauthenticated" ? (
+            <Link
+              className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-cyan-700 bg-white px-4 py-3 text-sm font-semibold text-cyan-800 transition hover:bg-cyan-50"
+              href="/login?callbackUrl=%2Fmaterials"
+            >
+              <LogIn aria-hidden="true" className="size-4" />
+              Login to Upload
+            </Link>
+          ) : null}
+        </div>
       </header>
 
       <section
@@ -641,6 +667,12 @@ function MaterialsPageContent() {
           ))}
         </div>
       )}
+      {uploadModalOpen ? (
+        <UploadMaterialModal
+          onClose={() => setUploadModalOpen(false)}
+          onUploaded={() => setRefreshKey((current) => current + 1)}
+        />
+      ) : null}
     </div>
   );
 }

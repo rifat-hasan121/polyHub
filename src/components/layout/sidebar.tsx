@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { ClipboardCheck, ShieldCheck } from "lucide-react";
 import { navItems } from "@/config/nav";
 
 type Props = {
@@ -10,6 +12,8 @@ type Props = {
 
 export function Sidebar({ onNavigate }: Props) {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+  const isAdmin = status === "authenticated" && session?.user?.role === "ADMIN";
 
   return (
     <nav aria-label="Main navigation">
@@ -55,6 +59,39 @@ export function Sidebar({ onNavigate }: Props) {
           );
         })}
       </ul>
+      {isAdmin ? (
+        <div className="mt-6 border-t border-slate-200 pt-4">
+          <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-amber-700">
+            Administration
+          </p>
+          <Link
+            aria-current={pathname.startsWith("/admin") ? "page" : undefined}
+            className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${
+              pathname.startsWith("/admin")
+                ? "border-amber-300 bg-amber-50 text-amber-900"
+                : "border-amber-200 bg-white text-amber-800 hover:bg-amber-50"
+            }`}
+            href="/admin/higher-study"
+            onClick={onNavigate}
+          >
+            <ShieldCheck aria-hidden="true" className="size-[18px] shrink-0 text-amber-700" />
+            <span>Admin Hub</span>
+          </Link>
+          <Link
+            aria-current={pathname.startsWith("/admin/materials") ? "page" : undefined}
+            className={`mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+              pathname.startsWith("/admin/materials")
+                ? "bg-amber-50 text-amber-900"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+            }`}
+            href="/admin/materials"
+            onClick={onNavigate}
+          >
+            <ClipboardCheck aria-hidden="true" className="size-[18px] shrink-0 text-amber-700" />
+            <span>Materials Moderation</span>
+          </Link>
+        </div>
+      ) : null}
     </nav>
   );
 }

@@ -31,6 +31,7 @@ export async function GET(request: Request) {
   }
 
   const where: Prisma.HigherStudyResourceWhereInput = {};
+  where.isVerified = true;
   if (category) where.category = category as HigherStudyCategory;
   if (department) where.department = department;
   if (subject) where.subject = { equals: subject, mode: "insensitive" };

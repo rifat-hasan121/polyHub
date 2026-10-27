@@ -26,6 +26,12 @@ enum MaterialType {
   BOOK_PDF
 }
 
+enum MaterialStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum JobType {
   INDUSTRIAL_ATTACHMENT
   FULL_TIME
@@ -88,21 +94,26 @@ model Subject {
   materials    Material[]
 
   @@unique([code, probidhan])
+  @@index([departmentId, semester])
 }
 
 model Material {
-  id        String          @id @default(cuid())
-  title     String
-  fileUrl   String
-  type      MaterialType
-  probidhan Probidhan
-  year      Int?
-  subjectId String
-  userId    String
-  subject   Subject         @relation(fields: [subjectId], references: [id])
-  user      User            @relation(fields: [userId], references: [id])
-  savedBy   SavedMaterial[]
-  createdAt DateTime        @default(now())
+  id              String         @id @default(cuid())
+  title           String
+  fileUrl         String
+  type            MaterialType
+  probidhan       Probidhan
+  status          MaterialStatus @default(PENDING)
+  rejectionReason String?
+  year            Int?
+  subjectId       String
+  userId          String
+  subject         Subject        @relation(fields: [subjectId], references: [id])
+  user            User           @relation(fields: [userId], references: [id])
+  savedBy         SavedMaterial[]
+  createdAt       DateTime       @default(now())
+
+  @@index([status, subjectId])
 }
 
 model SavedMaterial {
@@ -150,6 +161,7 @@ model HigherStudyResource {
   description      String
   category         HigherStudyCategory
   resourceType     HigherStudyResourceType @default(STUDY_MATERIAL)
+  isVerified       Boolean                 @default(true)
   department       String?
   subject          String?
   year             Int?

@@ -1,9 +1,41 @@
 import { MaterialType, Probidhan, Prisma } from "@prisma/client";
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const materialTypes = Object.values(MaterialType);
 const probidhans = Object.values(Probidhan);
+const subjectDepartments = {
+  CST: "Computer Science & Technology",
+  CE: "Civil Technology",
+  EEE: "Electrical & Electronic Engineering",
+  ME: "Mechanical Technology",
+  POWER: "Power Technology",
+  ET: "Electronics Technology",
+  RAC: "Refrigeration & Air Conditioning",
+} as const;
+const materialSubmissionSchema = z.object({
+  title: z.string().trim().min(3).max(200),
+  fileUrl: z.string().trim().url().max(2048).refine((value) => {
+    const protocol = new URL(value).protocol;
+    return protocol === "https:" || protocol === "http:";
+  }, "File URL must use http or https."),
+  type: z.enum(materialTypes),
+  probidhan: z.enum(probidhans),
+  subjectId: z.string().trim().min(1).max(100).nullable().optional(),
+  newSubject: z.object({
+    name: z.string().trim().min(2).max(120),
+    code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{1,20}$/),
+    department: z.enum(["CST", "CE", "EEE", "ME", "POWER", "ET", "RAC"]),
+    semester: z.number().int().min(1).max(8),
+  }).nullable().optional(),
+  year: z.number().int().min(1900).max(2100).nullable().optional(),
+}).refine(
+  (payload) => Boolean(payload.subjectId) !== Boolean(payload.newSubject),
+  "Choose an existing subject or provide new subject details.",
+);
 
 function isOneOf<T extends string>(
   value: string | null,
@@ -72,10 +104,11 @@ export async function GET(request: Request) {
     subjectWhere.department = { is: { code: department } };
   }
 
-  const where: Prisma.MaterialWhereInput = {};
+  const where: Prisma.MaterialWhereInput = { status: "APPROVED" };
   if (probidhanParam) {
     where.probidhan = probidhanParam;
   }
+
   if (typeParam) {
     where.type = typeParam;
   }
@@ -128,5 +161,95 @@ export async function GET(request: Request) {
       { error: "Unable to load materials right now." },
       { status: 500 },
     );
+  }
+}
+
+export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Sign in to upload a material." }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+  }
+
+  const parsed = materialSubmissionSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Please check the material details.", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  try {
+    let subject = parsed.data.subjectId
+      ? await prisma.subject.findUnique({
+          where: { id: parsed.data.subjectId },
+          select: { id: true, probidhan: true },
+        })
+      : null;
+
+    if (!subject && parsed.data.newSubject) {
+      const { name, code, department: departmentCode, semester } = parsed.data.newSubject;
+      const departmentName = subjectDepartments[departmentCode];
+      const department = await prisma.department.upsert({
+        where: { code: departmentCode },
+        create: { code: departmentCode, name: departmentName },
+        update: {},
+        select: { id: true },
+      });
+
+      subject = await prisma.subject.upsert({
+        where: {
+          code_probidhan: {
+            code,
+            probidhan: parsed.data.probidhan,
+          },
+        },
+        create: {
+          name,
+          code,
+          semester,
+          probidhan: parsed.data.probidhan,
+          departmentId: department.id,
+        },
+        update: {},
+        select: { id: true, probidhan: true },
+      });
+    }
+
+    if (!subject || subject.probidhan !== parsed.data.probidhan) {
+      return NextResponse.json(
+        { error: "Select a valid subject for the chosen Probidhan." },
+        { status: 400 },
+      );
+    }
+
+    const material = await prisma.material.create({
+      data: {
+        title: parsed.data.title,
+        fileUrl: parsed.data.fileUrl,
+        type: parsed.data.type,
+        probidhan: parsed.data.probidhan,
+        subjectId: subject.id,
+        year: parsed.data.year ?? null,
+        userId: session.user.id,
+        status: session.user.role === "ADMIN" ? "APPROVED" : "PENDING",
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+      },
+    });
+
+    return NextResponse.json({ material }, { status: 201 });
+  } catch (error) {
+    console.error("Failed to submit academic material:", error);
+    return NextResponse.json({ error: "Unable to submit the material right now." }, { status: 500 });
   }
 }

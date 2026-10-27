@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { GraduationCap, LogIn, LogOut, Menu, Search } from "lucide-react";
+import { GraduationCap, LogIn, LogOut, Menu, Search, ShieldCheck } from "lucide-react";
 
 type Props = {
   onMenuClick: () => void;
@@ -62,6 +62,15 @@ export function Navbar({ onMenuClick, isMenuOpen }: Props) {
       </label>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
+        {status === "authenticated" && session?.user?.role === "ADMIN" ? (
+          <Link
+            className="inline-flex h-9 items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 text-sm font-semibold text-amber-900 transition hover:border-amber-400 hover:bg-amber-100"
+            href="/admin/higher-study"
+          >
+            <ShieldCheck aria-hidden="true" className="size-4 text-amber-700" />
+            <span className="hidden sm:inline">Admin Panel</span>
+          </Link>
+        ) : null}
         {status === "loading" ? (
           <span
             aria-label="Checking session"
