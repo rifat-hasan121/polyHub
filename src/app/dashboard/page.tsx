@@ -12,7 +12,7 @@ import {
   GraduationCap,
   MessageSquare,
   FolderKanban,
-  Settings,
+  UserRound,
 } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -140,10 +140,10 @@ async function DashboardContent() {
           </div>
           <Link
             className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
-            href="/dashboard/settings"
+            href="/dashboard/profile"
           >
-            <Settings aria-hidden="true" className="size-4" />
-            Profile settings
+            <UserRound aria-hidden="true" className="size-4" />
+            My profile
           </Link>
         </div>
         <div className="mt-7 flex flex-wrap gap-2.5">
@@ -166,7 +166,7 @@ async function DashboardContent() {
           ) : (
             <Link
               className="rounded-full bg-amber-300/15 px-3 py-1.5 text-sm font-medium text-amber-100 hover:bg-amber-300/25"
-              href="/dashboard/settings"
+              href="/dashboard/profile"
             >
               Add your polytechnic
             </Link>
@@ -304,7 +304,7 @@ async function DashboardContent() {
               </p>
               <Link
                 className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-cyan-800 hover:underline"
-                href={department ? "/jobs" : "/dashboard/settings"}
+                href={department ? "/jobs" : "/dashboard/profile"}
               >
                 {department ? "Explore all opportunities" : "Complete your profile"}
                 <ArrowRight aria-hidden="true" className="size-4" />

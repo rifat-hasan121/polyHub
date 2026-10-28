@@ -78,25 +78,30 @@ export function Navbar({ onMenuClick, isMenuOpen }: Props) {
           />
         ) : session?.user ? (
           <div className="flex items-center gap-2">
-            {session.user.image ? (
-              <span
-                aria-label={session.user.name ?? "User profile"}
-                className="size-9 rounded-full border border-slate-200 bg-cover bg-center"
-                role="img"
-                style={{ backgroundImage: `url("${session.user.image}")` }}
-              />
-            ) : (
-              <span
-                aria-label={session.user.name ?? "User profile"}
-                className="flex size-9 items-center justify-center rounded-full bg-cyan-100 text-xs font-bold text-cyan-800"
-                role="img"
-              >
-                {initials(session.user.name, session.user.email)}
+            <Link
+              aria-label="View your profile"
+              className="flex min-w-0 items-center gap-2 rounded-full transition hover:bg-slate-50"
+              href="/dashboard/profile"
+              title="View your profile"
+            >
+              {session.user.image ? (
+                <span
+                  aria-hidden="true"
+                  className="size-9 rounded-full border border-slate-200 bg-cover bg-center"
+                  style={{ backgroundImage: `url("${session.user.image}")` }}
+                />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="flex size-9 items-center justify-center rounded-full bg-cyan-100 text-xs font-bold text-cyan-800"
+                >
+                  {initials(session.user.name, session.user.email)}
+                </span>
+              )}
+              <span className="hidden max-w-32 truncate text-sm font-medium text-slate-700 sm:block">
+                {session.user.name ?? session.user.email}
               </span>
-            )}
-            <span className="hidden max-w-32 truncate text-sm font-medium text-slate-700 sm:block">
-              {session.user.name ?? session.user.email}
-            </span>
+            </Link>
             <button
               aria-label="Sign out"
               className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"

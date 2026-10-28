@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   GraduationCap,
   MessageSquare,
+  UserRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -23,6 +24,11 @@ export const navItems: NavItem[] = [
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    title: "My Profile",
+    href: "/dashboard/profile",
+    icon: UserRound,
   },
   {
     title: "My Uploads",

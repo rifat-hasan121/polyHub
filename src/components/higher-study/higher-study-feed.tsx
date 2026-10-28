@@ -78,7 +78,7 @@ function safeUrl(value: string | null) {
 
 function AuthorProfile({ author, date }: { author: Author; date: string }) {
   const initials = author.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-  return (
+  const contents = (
     <div className="flex min-w-0 items-center gap-3">
       {author.image ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -98,6 +98,11 @@ function AuthorProfile({ author, date }: { author: Author; date: string }) {
       </span>
     </div>
   );
+  return author.id ? (
+    <Link aria-label={`View ${author.name}'s profile`} className="min-w-0 rounded-lg hover:opacity-80" href={`/profile/${encodeURIComponent(author.id)}`}>
+      {contents}
+    </Link>
+  ) : contents;
 }
 
 function StatusBadge({ status }: { status: Status }) {
