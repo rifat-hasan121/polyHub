@@ -10,6 +10,9 @@ export async function GET() {
   try {
     const resources = await prisma.higherStudyResource.findMany({
       orderBy: [{ year: "desc" }, { createdAt: "desc" }],
+      include: {
+        user: { select: { name: true, email: true } },
+      },
     });
     return NextResponse.json({ resources });
   } catch (error) {
@@ -41,6 +44,8 @@ export async function POST(request: Request) {
     const resource = await prisma.higherStudyResource.create({
       data: {
         ...parsed.data,
+        isVerified: true,
+        status: "APPROVED",
       },
     });
     return NextResponse.json({ resource }, { status: 201 });

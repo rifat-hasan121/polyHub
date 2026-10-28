@@ -31,6 +31,8 @@ For a new or local database, sync the Prisma schema before starting the app:
 npx prisma db push
 ```
 
+The Higher-Study Community feed at `/dashboard/my-higher-study` is publicly readable. Signed-in users can submit resources, like or dislike approved posts, and comment; new posts appear publicly after moderator approval. Apply the Prisma schema with `npx prisma db push` before using submissions and interactions.
+
 For production, provision PostgreSQL and apply the reviewed Prisma schema changes to that database before deploying the application. Do not copy local `.env` values into deployment settings. The production build and lint checks are:
 
 ```bash

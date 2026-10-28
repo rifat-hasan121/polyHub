@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { HigherStudyCategory } from "@prisma/client";
 import {
   ArrowUpRight,
+  CheckCircle,
+  Clock,
   FileText,
   LoaderCircle,
   Pencil,
@@ -11,6 +13,7 @@ import {
   Trash2,
   Video,
   X,
+  XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -27,6 +30,9 @@ type Resource = {
   videoUrl: string | null;
   year: number | null;
   isVerified: boolean;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  rejectionReason: string | null;
+  user: { name: string; email: string } | null;
   createdAt: string;
 };
 
@@ -83,6 +89,12 @@ function isSafeUrl(value: string | null): value is string {
   } catch {
     return false;
   }
+}
+
+function statusLabel(status: Resource["status"]) {
+  if (status === "APPROVED") return "Approved";
+  if (status === "REJECTED") return "Rejected";
+  return "Pending";
 }
 
 function ResourceForm({
@@ -303,6 +315,7 @@ export function HigherStudyTable() {
   const [formResource, setFormResource] = useState<Resource | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deletingId, setDeletingId] = useState("");
+  const [moderatingId, setModeratingId] = useState("");
 
   const loadResources = useCallback(async () => {
     setError("");
@@ -370,6 +383,37 @@ export function HigherStudyTable() {
     }
   }
 
+  async function moderateResource(resource: Resource, status: "APPROVED" | "REJECTED") {
+    const rejectionReason = status === "REJECTED"
+      ? window.prompt(`Why are you rejecting "${resource.title}"?`)?.trim()
+      : undefined;
+    if (status === "REJECTED" && !rejectionReason) return;
+
+    setModeratingId(resource.id);
+    setError("");
+    try {
+      const response = await fetch(`/api/admin/higher-study/${encodeURIComponent(resource.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, ...(rejectionReason ? { rejectionReason } : {}) }),
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Unable to update submission status.");
+      setResources((current) => current.map((item) => item.id === resource.id
+        ? {
+            ...item,
+            status,
+            isVerified: status === "APPROVED",
+            rejectionReason: status === "REJECTED" ? rejectionReason ?? null : null,
+          }
+        : item));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to update submission status.");
+    } finally {
+      setModeratingId("");
+    }
+  }
+
   return (
     <section className="mx-auto max-w-7xl">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -411,6 +455,7 @@ export function HigherStudyTable() {
                   <th className="px-5 py-3 font-semibold">Category</th>
                   <th className="px-5 py-3 font-semibold">Department</th>
                   <th className="px-5 py-3 font-semibold">Year</th>
+                  <th className="px-5 py-3 font-semibold">Status / contributor</th>
                   <th className="px-5 py-3 font-semibold">Links</th>
                   <th className="px-5 py-3 text-right font-semibold">Actions</th>
                 </tr>
@@ -421,6 +466,7 @@ export function HigherStudyTable() {
                     <td className="max-w-xs px-5 py-4">
                       <p className="font-semibold text-slate-900">{resource.title}</p>
                       {resource.subject ? <p className="mt-1 text-xs text-slate-500">{resource.subject}</p> : null}
+                      {resource.user ? <p className="mt-1 text-xs text-slate-500">By {resource.user.name} · {resource.user.email}</p> : null}
                     </td>
                     <td className="px-5 py-4">
                       <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-semibold text-cyan-800">
@@ -429,6 +475,21 @@ export function HigherStudyTable() {
                     </td>
                     <td className="px-5 py-4 text-slate-600">{resource.department || "—"}</td>
                     <td className="px-5 py-4 text-slate-600">{resource.year ?? "—"}</td>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        resource.status === "APPROVED"
+                          ? "bg-emerald-50 text-emerald-800"
+                          : resource.status === "REJECTED"
+                            ? "bg-red-50 text-red-800"
+                            : "bg-amber-50 text-amber-800"
+                      }`}>
+                        {resource.status === "APPROVED" ? <CheckCircle aria-hidden="true" className="size-3.5" /> : null}
+                        {resource.status === "REJECTED" ? <XCircle aria-hidden="true" className="size-3.5" /> : null}
+                        {resource.status === "PENDING" ? <Clock aria-hidden="true" className="size-3.5" /> : null}
+                        {statusLabel(resource.status)}
+                      </span>
+                      {resource.rejectionReason ? <p className="mt-1 max-w-48 text-xs text-red-700">{resource.rejectionReason}</p> : null}
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex flex-wrap gap-1.5">
                         {isSafeUrl(resource.fileUrl) ? (
@@ -458,6 +519,26 @@ export function HigherStudyTable() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-2">
+                        {resource.user && resource.status === "PENDING" ? (
+                          <>
+                            <button
+                              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-emerald-200 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-60"
+                              disabled={moderatingId === resource.id}
+                              onClick={() => void moderateResource(resource, "APPROVED")}
+                              type="button"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-amber-200 px-2.5 text-xs font-semibold text-amber-800 hover:bg-amber-50 disabled:opacity-60"
+                              disabled={moderatingId === resource.id}
+                              onClick={() => void moderateResource(resource, "REJECTED")}
+                              type="button"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        ) : null}
                         <button
                           aria-label={`Edit ${resource.title}`}
                           className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"

@@ -23,7 +23,6 @@ type MaterialResult = {
   id: string;
   title: string;
   fileUrl: string;
-  isDemo?: boolean;
   type: MaterialType;
   probidhan: Probidhan;
   createdAt: string;
@@ -37,102 +36,6 @@ type MaterialResult = {
     };
   };
 };
-
-const demoMaterials: MaterialResult[] = [
-  {
-    id: "demo-cst-note",
-    title: "Programming Essentials — Class Notes",
-    fileUrl: "",
-    isDemo: true,
-    type: "NOTE",
-    probidhan: "PROBIDHAN_2022",
-    createdAt: "2026-10-12T10:00:00.000Z",
-    subject: {
-      name: "Computer Programming",
-      code: "28511",
-      semester: 1,
-      department: { name: "Computer Science & Technology", code: "CST" },
-    },
-  },
-  {
-    id: "demo-cst-question-bank",
-    title: "Data Structure & Algorithm — Board Questions",
-    fileUrl: "",
-    isDemo: true,
-    type: "QUESTION_BANK",
-    probidhan: "PROBIDHAN_2022",
-    createdAt: "2026-10-08T10:00:00.000Z",
-    subject: {
-      name: "Data Structure & Algorithm",
-      code: "28532",
-      semester: 3,
-      department: { name: "Computer Science & Technology", code: "CST" },
-    },
-  },
-  {
-    id: "demo-ce-syllabus",
-    title: "Structural Mechanics — Syllabus Guide",
-    fileUrl: "",
-    isDemo: true,
-    type: "SYLLABUS",
-    probidhan: "PROBIDHAN_2022",
-    createdAt: "2026-10-05T10:00:00.000Z",
-    subject: {
-      name: "Structural Mechanics",
-      code: "26431",
-      semester: 3,
-      department: { name: "Civil Technology", code: "CE" },
-    },
-  },
-  {
-    id: "demo-eee-book",
-    title: "Electrical Circuits — Reference Book",
-    fileUrl: "",
-    isDemo: true,
-    type: "BOOK_PDF",
-    probidhan: "PROBIDHAN_2016",
-    createdAt: "2026-09-28T10:00:00.000Z",
-    subject: {
-      name: "Electrical Circuits",
-      code: "66721",
-      semester: 2,
-      department: {
-        name: "Electrical & Electronic Engineering",
-        code: "EEE",
-      },
-    },
-  },
-  {
-    id: "demo-me-question-bank",
-    title: "Thermodynamics — Previous Board Questions",
-    fileUrl: "",
-    isDemo: true,
-    type: "QUESTION_BANK",
-    probidhan: "PROBIDHAN_2016",
-    createdAt: "2026-09-22T10:00:00.000Z",
-    subject: {
-      name: "Thermodynamics",
-      code: "67131",
-      semester: 3,
-      department: { name: "Mechanical Technology", code: "ME" },
-    },
-  },
-  {
-    id: "demo-power-note",
-    title: "Power System Protection — Study Notes",
-    fileUrl: "",
-    isDemo: true,
-    type: "NOTE",
-    probidhan: "PROBIDHAN_2022",
-    createdAt: "2026-09-18T10:00:00.000Z",
-    subject: {
-      name: "Power System Protection",
-      code: "26861",
-      semester: 6,
-      department: { name: "Power Technology", code: "POWER" },
-    },
-  },
-];
 
 const departments = [
   { code: "", name: "All departments" },
@@ -172,40 +75,6 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function getMatchingDemoMaterials(filters: {
-  department: string;
-  semester: string;
-  probidhan: Probidhan;
-  type: MaterialType | "";
-  search: string;
-}) {
-  const normalizedSearch = filters.search.toLocaleLowerCase();
-
-  return demoMaterials.filter((material) => {
-    const matchesDepartment =
-      !filters.department ||
-      material.subject.department.code === filters.department;
-    const matchesSemester =
-      !filters.semester ||
-      material.subject.semester === Number(filters.semester);
-    const matchesProbidhan = material.probidhan === filters.probidhan;
-    const matchesType = !filters.type || material.type === filters.type;
-    const matchesSearch =
-      !normalizedSearch ||
-      `${material.title} ${material.subject.name} ${material.subject.code}`
-        .toLocaleLowerCase()
-        .includes(normalizedSearch);
-
-    return (
-      matchesDepartment &&
-      matchesSemester &&
-      matchesProbidhan &&
-      matchesType &&
-      matchesSearch
-    );
-  });
-}
-
 function MaterialSkeleton() {
   return (
     <div className="animate-pulse rounded-2xl border border-slate-200 bg-white p-5">
@@ -230,8 +99,10 @@ function MaterialsPageContent() {
     departments.some((item) => item.code === queryDepartment) ? queryDepartment : "",
   );
   const [semester, setSemester] = useState(/^[1-8]$/.test(querySemester) ? querySemester : "");
-  const [probidhan, setProbidhan] = useState<Probidhan>(
-    queryProbidhan === "PROBIDHAN_2016" ? "PROBIDHAN_2016" : "PROBIDHAN_2022",
+  const [probidhan, setProbidhan] = useState<Probidhan | "">(
+    queryProbidhan === "PROBIDHAN_2016" || queryProbidhan === "PROBIDHAN_2022"
+      ? queryProbidhan
+      : "",
   );
   const [type, setType] = useState<MaterialType | "">("");
   const [searchInput, setSearchInput] = useState("");
@@ -242,7 +113,6 @@ function MaterialsPageContent() {
   const [bookmarkError, setBookmarkError] = useState("");
   const [savedMaterialIds, setSavedMaterialIds] = useState<string[]>([]);
   const [updatingBookmarkId, setUpdatingBookmarkId] = useState("");
-  const [usingSampleData, setUsingSampleData] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -286,7 +156,7 @@ function MaterialsPageContent() {
     const params = new URLSearchParams();
     if (department) params.set("department", department);
     if (semester) params.set("semester", semester);
-    params.set("probidhan", probidhan);
+    if (probidhan) params.set("probidhan", probidhan);
     if (type) params.set("type", type);
     if (search) params.set("search", search);
 
@@ -307,40 +177,17 @@ function MaterialsPageContent() {
           throw new Error(result.error ?? "Unable to load materials.");
         }
 
-        const liveMaterials = result.materials ?? [];
-        if (liveMaterials.length > 0) {
-          setMaterials(liveMaterials);
-          setUsingSampleData(false);
-          return;
-        }
-
-        const samples = getMatchingDemoMaterials({
-          department,
-          semester,
-          probidhan,
-          type,
-          search,
-        });
-        setMaterials(samples);
-        setUsingSampleData(samples.length > 0);
+        setMaterials(result.materials ?? []);
       } catch (caught) {
         if (caught instanceof DOMException && caught.name === "AbortError") {
           return;
         }
-        const samples = getMatchingDemoMaterials({
-          department,
-          semester,
-          probidhan,
-          type,
-          search,
-        });
         const reason =
           caught instanceof Error
             ? caught.message
             : "Unable to load live materials right now.";
         setError(`Live materials could not be loaded (${reason}).`);
-        setMaterials(samples);
-        setUsingSampleData(samples.length > 0);
+        setMaterials([]);
       } finally {
         if (!controller.signal.aborted) {
           setIsLoading(false);
@@ -471,6 +318,7 @@ function MaterialsPageContent() {
             <div className="mt-1.5 flex h-11 rounded-lg border border-slate-300 bg-slate-50 p-1">
               {(
                 [
+                  ["", "All"],
                   ["PROBIDHAN_2022", "2022"],
                   ["PROBIDHAN_2016", "2016"],
                 ] as const
@@ -524,23 +372,17 @@ function MaterialsPageContent() {
         <p className="text-sm text-slate-600">
           {isLoading
             ? "Finding materials..."
-            : `${materials.length} ${materials.length === 1 ? "material" : "materials"} found${usingSampleData ? " · sample data" : materials.length === 30 ? " (showing latest 30)" : ""}`}
+            : `${materials.length} ${materials.length === 1 ? "material" : "materials"} found${materials.length === 30 ? " (showing latest 30)" : ""}`}
         </p>
       </div>
 
-      {error && !usingSampleData ? (
+      {error ? (
         <div
           className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800"
           role="alert"
         >
           {error}
         </div>
-      ) : usingSampleData ? (
-        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {error
-            ? `${error} Showing sample materials instead; these are not real uploads and have no downloadable files.`
-            : "You’re viewing sample materials for preview. These are not real uploads and do not have downloadable files."}
-        </p>
       ) : null}
       {bookmarkError ? (
         <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
@@ -548,7 +390,7 @@ function MaterialsPageContent() {
         </p>
       ) : null}
 
-      {error && !usingSampleData ? null : isLoading ? (
+      {error ? null : isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, index) => (
             <MaterialSkeleton key={index} />
@@ -563,9 +405,14 @@ function MaterialsPageContent() {
             No materials found
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
-            Try changing your search or filters. New notes and question papers
-            are added by the community regularly.
+            Only approved uploads appear here. Try changing your filters, or check
+            My Uploads to see whether your submission is still awaiting review.
           </p>
+          {sessionStatus === "authenticated" ? (
+            <Link className="mt-4 inline-flex text-sm font-semibold text-cyan-800 hover:underline" href="/dashboard/my-materials">
+              View my uploads
+            </Link>
+          ) : null}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -585,7 +432,7 @@ function MaterialsPageContent() {
                   )}
                 </span>
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                  {sessionStatus === "authenticated" && !material.isDemo ? (
+                  {sessionStatus === "authenticated" ? (
                     <button
                       aria-label={
                         savedMaterialIds.includes(material.id)
@@ -609,11 +456,6 @@ function MaterialsPageContent() {
                         <Bookmark aria-hidden="true" className="size-5" />
                       )}
                     </button>
-                  ) : null}
-                  {material.isDemo ? (
-                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                      Sample
-                    </span>
                   ) : null}
                   <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
                     {materialLabels[material.type]}
@@ -643,26 +485,15 @@ function MaterialsPageContent() {
                   {formatDate(material.createdAt)}
                 </span>
               </div>
-              {material.isDemo ? (
-                <button
-                  className="mt-5 inline-flex h-10 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-500"
-                  disabled
-                  type="button"
-                >
-                  <Download aria-hidden="true" className="size-4" />
-                  Sample file unavailable
-                </button>
-              ) : (
-                <a
-                  className="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-cyan-800"
-                  href={material.fileUrl}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <Download aria-hidden="true" className="size-4" />
-                  Download / View PDF
-                </a>
-              )}
+              <a
+                className="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-cyan-800"
+                href={material.fileUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <Download aria-hidden="true" className="size-4" />
+                Download / View PDF
+              </a>
             </article>
           ))}
         </div>

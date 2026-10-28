@@ -50,6 +50,11 @@ enum HigherStudyResourceType {
   QUESTION_BANK
 }
 
+enum HigherStudyReactionType {
+  LIKE
+  DISLIKE
+}
+
 enum UniversityType {
   PUBLIC
   PRIVATE
@@ -57,23 +62,26 @@ enum UniversityType {
 }
 
 model User {
-  id             String          @id @default(cuid())
-  name           String
-  email          String          @unique
-  passwordHash   String?
-  image          String?
-  role           Role            @default(STUDENT)
-  polytechnic    String?
-  department     String?
-  probidhan      Probidhan?
-  semester       Int?
-  materials      Material[]
-  savedMaterials SavedMaterial[]
-  projects       Project[]
-  communityPosts CommunityPost[]
-  comments       Comment[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id                   String                @id @default(cuid())
+  name                 String
+  email                String                @unique
+  passwordHash         String?
+  image                String?
+  role                 Role                  @default(STUDENT)
+  polytechnic          String?
+  department           String?
+  probidhan            Probidhan?
+  semester             Int?
+  materials            Material[]
+  savedMaterials       SavedMaterial[]
+  projects             Project[]
+  higherStudyResources HigherStudyResource[]
+  higherStudyComments  HigherStudyComment[]
+  higherStudyReactions HigherStudyReaction[]
+  communityPosts       CommunityPost[]
+  comments             Comment[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 }
 
 model Department {
@@ -98,20 +106,20 @@ model Subject {
 }
 
 model Material {
-  id              String         @id @default(cuid())
+  id              String          @id @default(cuid())
   title           String
   fileUrl         String
   type            MaterialType
   probidhan       Probidhan
-  status          MaterialStatus @default(PENDING)
+  status          MaterialStatus  @default(PENDING)
   rejectionReason String?
   year            Int?
   subjectId       String
   userId          String
-  subject         Subject        @relation(fields: [subjectId], references: [id])
-  user            User           @relation(fields: [userId], references: [id])
+  subject         Subject         @relation(fields: [subjectId], references: [id])
+  user            User            @relation(fields: [userId], references: [id])
   savedBy         SavedMaterial[]
-  createdAt       DateTime       @default(now())
+  createdAt       DateTime        @default(now())
 
   @@index([status, subjectId])
 }
@@ -170,10 +178,44 @@ model HigherStudyResource {
   questionPaperUrl String?
   answerKeyUrl     String?
   solutionUrl      String?
+  status           MaterialStatus          @default(APPROVED)
+  rejectionReason  String?
+  userId           String?
+  user             User?                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments         HigherStudyComment[]
+  reactions        HigherStudyReaction[]
   createdAt        DateTime                @default(now())
 
   @@index([category, resourceType, createdAt])
   @@index([department, subject])
+  @@index([userId, createdAt])
+}
+
+model HigherStudyComment {
+  id         String              @id @default(cuid())
+  content    String              @db.VarChar(2000)
+  resourceId String
+  userId     String
+  resource   HigherStudyResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime            @default(now())
+
+  @@index([resourceId, createdAt])
+  @@index([userId])
+}
+
+model HigherStudyReaction {
+  id         String                  @id @default(cuid())
+  type       HigherStudyReactionType
+  resourceId String
+  userId     String
+  resource   HigherStudyResource     @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  user       User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+
+  @@unique([resourceId, userId])
+  @@index([userId])
 }
 
 model UniversityGuide {

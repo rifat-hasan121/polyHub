@@ -113,6 +113,14 @@ async function DashboardContent() {
       icon: ClipboardList,
       color: "bg-emerald-50 text-emerald-700",
     },
+    {
+      label: "Higher-study posts",
+      value: "View",
+      description: "Track your shared study resources",
+      href: "/dashboard/my-higher-study",
+      icon: GraduationCap,
+      color: "bg-indigo-50 text-indigo-700",
+    },
   ];
 
   return (
@@ -166,7 +174,7 @@ async function DashboardContent() {
         </div>
       </section>
 
-      <section aria-label="Your activity" className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Your activity" className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {stats.map(({ label, value, description, href, icon: Icon, color }) => (
           <Link
             className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-cyan-200 hover:shadow-md"

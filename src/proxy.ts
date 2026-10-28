@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const protectedPage = (pathname: string) =>
   pathname === "/dashboard" ||
-  pathname.startsWith("/dashboard/") ||
+  (pathname.startsWith("/dashboard/") && pathname !== "/dashboard/my-higher-study") ||
   pathname === "/projects/submit";
 
 export async function proxy(request: NextRequest) {

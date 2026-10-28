@@ -1,7 +1,8 @@
 "use client";
 
 import { MaterialType, Probidhan } from "@prisma/client";
-import { LoaderCircle, UploadCloud, X } from "lucide-react";
+import Link from "next/link";
+import { ClipboardList, LoaderCircle, UploadCloud, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
 type SubjectOption = {
@@ -198,13 +199,23 @@ export function UploadMaterialModal({
         </div>
 
         {submittedStatus ? (
-          <button
-            className="mt-6 min-h-11 w-full rounded-lg bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-cyan-800"
-            onClick={onClose}
-            type="button"
-          >
-            Done
-          </button>
+          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              className="min-h-11 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              onClick={onClose}
+              type="button"
+            >
+              Done
+            </button>
+            <Link
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-cyan-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-cyan-800"
+              href="/dashboard/my-materials"
+              onClick={onClose}
+            >
+              <ClipboardList aria-hidden="true" className="size-4" />
+              View my submissions
+            </Link>
+          </div>
         ) : (
           <form className="mt-6 space-y-4" onSubmit={(event) => void submitMaterial(event)}>
             <label className={labelClass} htmlFor="material-title">

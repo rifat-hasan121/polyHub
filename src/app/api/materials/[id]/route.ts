@@ -84,11 +84,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   try {
     const result = await prisma.material.deleteMany({
-      where: { id, userId: session.user.id, status: "PENDING" },
+      where: { id, userId: session.user.id },
     });
     if (result.count === 0) {
       return NextResponse.json(
-        { error: "Pending material was not found or can no longer be deleted." },
+        { error: "Your material was not found." },
         { status: 404 },
       );
     }

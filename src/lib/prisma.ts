@@ -30,9 +30,33 @@ function cachedClientHasMaterialModerationFields(client: PrismaClient | undefine
   return fieldNames.includes("status") && fieldNames.includes("rejectionReason");
 }
 
+function cachedClientHasHigherStudySubmissionFields(client: PrismaClient | undefined) {
+  if (!client) return false;
+
+  const runtimeDataModel: unknown = Reflect.get(client, "_runtimeDataModel");
+  if (!isRecord(runtimeDataModel) || !isRecord(runtimeDataModel.models)) return false;
+  const models = runtimeDataModel.models;
+
+  function getFieldNames(modelName: string) {
+    const model = models[modelName];
+    if (!isRecord(model) || !Array.isArray(model.fields)) return [];
+    return model.fields.flatMap((field): string[] =>
+      isRecord(field) && typeof field.name === "string" ? [field.name] : [],
+    );
+  }
+
+  const userFields = getFieldNames("User");
+  const resourceFields = getFieldNames("HigherStudyResource");
+  return userFields.includes("higherStudyResources") &&
+    resourceFields.includes("userId") &&
+    resourceFields.includes("status") &&
+    resourceFields.includes("rejectionReason");
+}
+
 export const prisma =
   cachedClientHasBtebModels &&
   cachedClientHasHigherStudyModels &&
+  cachedClientHasHigherStudySubmissionFields(cachedPrisma) &&
   cachedClientHasMaterialModerationFields(cachedPrisma)
     ? cachedPrisma
     : new PrismaClient();

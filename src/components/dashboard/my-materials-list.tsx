@@ -308,15 +308,13 @@ export function MyMaterialsList() {
                     </a>
                   ) : null}
                   {material.status === "PENDING" ? (
-                    <>
-                      <button className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-cyan-200 px-3 text-xs font-semibold text-cyan-800 hover:bg-cyan-50" onClick={() => setEditing(material)} type="button">
-                        <Pencil aria-hidden="true" className="size-3.5" /> Edit
-                      </button>
-                      <button className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50" onClick={() => void deleteMaterial(material)} type="button">
-                        <Trash2 aria-hidden="true" className="size-3.5" /> Delete
-                      </button>
-                    </>
+                    <button className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-cyan-200 px-3 text-xs font-semibold text-cyan-800 hover:bg-cyan-50" onClick={() => setEditing(material)} type="button">
+                      <Pencil aria-hidden="true" className="size-3.5" /> Edit
+                    </button>
                   ) : null}
+                  <button className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50" onClick={() => void deleteMaterial(material)} type="button">
+                    <Trash2 aria-hidden="true" className="size-3.5" /> Delete
+                  </button>
                 </div>
               </div>
             </article>

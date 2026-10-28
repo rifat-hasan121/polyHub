@@ -2,6 +2,7 @@ import {
   BookOpen,
   Briefcase,
   Calculator,
+  ClipboardList,
   FileText,
   FolderGit2,
   LayoutDashboard,
@@ -22,6 +23,16 @@ export const navItems: NavItem[] = [
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    title: "My Uploads",
+    href: "/dashboard/my-materials",
+    icon: ClipboardList,
+  },
+  {
+    title: "My Higher-Study Posts",
+    href: "/dashboard/my-higher-study",
+    icon: GraduationCap,
   },
   {
     title: "Materials & Syllabus",

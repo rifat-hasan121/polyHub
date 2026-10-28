@@ -27,4 +27,14 @@ export const higherStudyResourceUpdateSchema = higherStudyResourceSchema
   .partial()
   .refine((payload) => Object.keys(payload).length > 0, "Provide at least one field to update.");
 
+export const higherStudySubmissionSchema = higherStudyResourceSchema.omit({ isVerified: true });
+
+export const higherStudyModerationSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("APPROVED") }),
+  z.object({
+    status: z.literal("REJECTED"),
+    rejectionReason: z.string().trim().min(1).max(1000),
+  }),
+]);
+
 export type HigherStudyResourceInput = z.infer<typeof higherStudyResourceSchema>;
